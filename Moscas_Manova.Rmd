@@ -1,0 +1,37 @@
+---
+title: "Moscas Manova"
+author: "Matheus"
+date: "6 de novembro de 2017"
+output: pdf_document
+---
+
+#Moscas
+
+##Pacotes
+```{r}
+source("funcoes.R")
+pacotes <- c("tidyverse",
+             "magrittr")
+ipak(pacotes)
+```
+##Lendo Os Dados
+
+```{r}
+
+dados <- read.table("Dados/Moscas.txt")
+
+
+colnames(dados) <- c("Especie","CompAsa","LargAsa","Comp3Palpo",          "Larg3Palpo","Comp4Palpo","Comp12Antena","Comp13Antena")
+
+Especie_chr <- function(x){
+  if (x == 0)
+    y <- "torrens"
+  else
+    y <- "carteri"
+}
+dados %<>% mutate( Especie_fct = 
+                    factor(map_chr(Especie,Especie_chr)))
+
+```
+
+
