@@ -11,7 +11,8 @@ output: pdf_document
 ```{r}
 source("funcoes.R")
 pacotes <- c("tidyverse",
-             "magrittr")
+             "magrittr",
+             "gridExtra")
 ipak(pacotes)
 ```
 ##Lendo Os Dados
@@ -19,6 +20,15 @@ ipak(pacotes)
 ```{r}
 
 dados <- read.table("Dados/Moscas.txt")
+
+nomes_COl <- c("Especie",
+               "Comprimento da asa",
+               "Largura da asa",
+               "Comprimento do terceiro palpo",
+               "Largura do terceiro palpo",
+               "Comprimento do quarto palpo",
+               "Comprimento do 12ºsegmento\n da antena",
+               "Comprimento do 13ºsegmento\n da antena")
 
 
 colnames(dados) <- c("Especie","CompAsa","LargAsa","Comp3Palpo",          "Larg3Palpo","Comp4Palpo","Comp12Antena","Comp13Antena")
@@ -32,6 +42,31 @@ Especie_chr <- function(x){
 dados %<>% mutate( Especie_fct = 
                     factor(map_chr(Especie,Especie_chr)))
 
+
 ```
 
+
+##Analise Descritiva
+
+```{r}
+##criando funcao para facilitar a criação dos boxplots
+boxplots_moscas <- function(coluna){
+ qplot(dados$Especie_fct,coluna,geom = "boxplot") + labs(x = "Espécie") + theme_bw()
+}
+
+graficos <- apply(dados[,2:8],2,boxplots_moscas)
+
+for(i in 1:7)
+ graficos[[i]] <-  graficos[[i]] + labs(y = nomes_COl[i+1])
+  
+##print os boxplots
+grid.arrange(graficos[[1]], graficos[[2]], 
+             graficos[[3]], graficos[[4]])
+
+grid.arrange(graficos[[5]], graficos[[6]], 
+             graficos[[7]], 
+            layout_matrix = rbind(c(1,1),c(2,3)))
+
+
+```
 
