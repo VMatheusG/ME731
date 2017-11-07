@@ -6,3 +6,7 @@ ipak <- function(pkg){
     install.packages(new.pkg, dependencies = TRUE)
   sapply(pkg, require, character.only = TRUE)
 }
+##calcula coeficiente de correlacao(%)
+cv <- function(x){
+  100 * sd(x)/mean(x)
+}
