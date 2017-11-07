@@ -46,8 +46,13 @@ dados %<>% mutate( Especie_fct =
 ```
 
 
-##Analise Descritiva
+#Analise Descritiva
 
+##Medidas Descritivas
+
+
+
+##Boxplots
 ```{r}
 ##criando funcao para facilitar a criação dos boxplots
 boxplots_moscas <- function(coluna){
@@ -68,5 +73,25 @@ grid.arrange(graficos[[5]], graficos[[6]],
             layout_matrix = rbind(c(1,1),c(2,3)))
 
 
+```
+##Histograma
+```{r}
+##criando funcao para facilitar a criação dos boxplots
+hist_moscas <- function(coluna){
+ qplot(coluna,geom = "histogram") + theme_bw()
+}
+
+graficos <- apply(dados[,2:8],2,hist_moscas)
+
+for(i in 1:7)
+ graficos[[i]] <-  graficos[[i]] + labs(x = nomes_COl[i+1],y = NULL)
+  
+##print os boxplots
+grid.arrange(graficos[[1]], graficos[[2]], 
+             graficos[[3]], graficos[[4]])
+
+grid.arrange(graficos[[5]], graficos[[6]], 
+             graficos[[7]], 
+            layout_matrix = rbind(c(1,1),c(2,3)))
 ```
 
