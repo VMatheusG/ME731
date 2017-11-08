@@ -10,10 +10,13 @@ output: pdf_document
 ##Pacotes
 ```{r}
 source("funcoes.R")
-pacotes <- c("tidyverse",
+pacotes <- c("ggplot2",
              "magrittr",
              "gridExtra",
-             "xtable")
+             "xtable",
+             "dplyr",
+             "purrr",
+             "tidyr")
 
 ipak(pacotes)
 options(xtable.comment = FALSE)
@@ -107,11 +110,13 @@ grid.arrange(graficos[[5]], graficos[[6]],
 
 
 ```
+
 ##Histograma
 ```{r}
 ##criando funcao para facilitar a criação dos boxplots
 hist_moscas <- function(coluna){
- qplot(coluna,geom = "histogram") + theme_bw()
+ qplot(coluna,geom = "histogram",col = I("black"),fill = I("white"),
+       binwidth = 1) + theme_bw() 
 }
 
 graficos <- apply(dados[,2:8],2,hist_moscas)
@@ -127,4 +132,20 @@ grid.arrange(graficos[[5]], graficos[[6]],
              graficos[[7]], 
             layout_matrix = rbind(c(1,1),c(2,3)))
 ```
+
+##Diagrama Dispersao
+
+
+```{r}
+cols <- character(nrow(dados))
+cols[] <- "black"
+
+cols[dados$Especie_fct == "carteri"] <- "red"
+cols[dados$Especie_fct == "torrens"] <- "blue"
+pairs(dados[,2:8],col=cols,upper.panel = NULL)
+par(xpd = T)
+legend("topright", legend = c(levels(dados$Especie_fct)), 
+       fill = c("blue","red"))
+```
+
 
