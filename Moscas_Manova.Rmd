@@ -12,8 +12,11 @@ output: pdf_document
 source("funcoes.R")
 pacotes <- c("tidyverse",
              "magrittr",
-             "gridExtra")
+             "gridExtra",
+             "xtable")
+
 ipak(pacotes)
+options(xtable.comment = FALSE)
 ```
 ##Lendo Os Dados
 
@@ -21,14 +24,16 @@ ipak(pacotes)
 
 dados <- read.table("Dados/Moscas.txt")
 
-nomes_COl <- c("Especie",
-               "Comprimento da asa",
-               "Largura da asa",
-               "Comprimento do terceiro palpo",
-               "Largura do terceiro palpo",
-               "Comprimento do quarto palpo",
-               "Comprimento do 12ºsegmento\n da antena",
-               "Comprimento do 13ºsegmento\n da antena")
+nomes_COl <- c("Especie" = "Especie",
+              "CompAsa" =  "Comprimento da asa",
+              "LargAsa" = "Largura da asa",
+              "Comp3Palpo" = "Comprimento do terceiro palpo",
+              "Larg3Palpo" =  "Largura do terceiro palpo", 
+              "Comp4Palpo" = "Comprimento do quarto palpo",
+              "Comp12Antena" = 
+           "Comprimento do 12ºsegmento\n da antena",
+            "Comp13Antena" =  "Comprimento do 13ºsegmento\n da antena")
+
 
 
 colnames(dados) <- c("Especie","CompAsa","LargAsa","Comp3Palpo",          "Larg3Palpo","Comp4Palpo","Comp12Antena","Comp13Antena")
@@ -50,7 +55,7 @@ dados %<>% mutate( Especie_fct =
 
 ##Medidas Descritivas
 
-```{r}
+```{r results = "asis"}
 descritivas <- 
 dados %>% select_if(.predicate = is.integer) %>% 
   gather(Coluna,valores,-Especie) %>% 
@@ -69,9 +74,16 @@ dados %>% select_if(.predicate = is.integer) %>%
 
 descritivas_2 <- nest(descritivas)
 
+for(i in 1:7){
+  print(xtable(descritivas_2$data[[i]], 
+         caption = nomes_COl[descritivas_2$Coluna[i]] ))
+}
 
 ```
 
+
+
+\newpage
 
 ##Boxplots
 ```{r}
@@ -83,7 +95,7 @@ boxplots_moscas <- function(coluna){
 graficos <- apply(dados[,2:8],2,boxplots_moscas)
 
 for(i in 1:7)
- graficos[[i]] <-  graficos[[i]] + labs(y = nomes_COl[i+1])
+ graficos[[i]] <-  graficos[[i]] + labs(y = nomes_COl[i + 1])
   
 ##print os boxplots
 grid.arrange(graficos[[1]], graficos[[2]], 
