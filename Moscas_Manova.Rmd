@@ -53,8 +53,8 @@ dados %<>% mutate( Especie_fct =
 ```{r}
 descritivas <- 
 dados %>% select_if(.predicate = is.integer) %>% 
-  gather(coluna,valores) %>% 
-  group_by(Coluna = coluna) %>% 
+  gather(Coluna,valores,-Especie) %>% 
+  group_by(Coluna,Especie) %>% 
   summarise_if(.predicate = function(x) is.numeric(x),
                   .funs = c(Media = "mean",
                      DP = "sd",
@@ -63,7 +63,13 @@ dados %>% select_if(.predicate = is.integer) %>%
                      CV =  "cv",
                      Mediana = "median",
                      Maximo = "max")) %>% 
-  mutate_if(.predicate = is.numeric,funs(round(.,3)))
+  mutate_if(.predicate = is.numeric,funs(round(.,3))) %>% 
+  mutate(Especie =  factor(map_chr(Especie,Especie_chr)))
+
+
+descritivas_2 <- nest(descritivas)
+
+
 ```
 
 
