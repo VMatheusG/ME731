@@ -149,3 +149,16 @@ legend("topright", legend = c(levels(dados$Especie_fct)),
 ```
 
 
+
+##Distancia de Mahalanobis
+
+
+```{r}
+
+
+
+
+```
+
+
+
