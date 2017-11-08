@@ -146,6 +146,7 @@ pairs(dados[,2:8],col=cols,upper.panel = NULL)
 par(xpd = T)
 legend("topright", legend = c(levels(dados$Especie_fct)), 
        fill = c("blue","red"))
+
 ```
 
 
@@ -154,9 +155,32 @@ legend("topright", legend = c(levels(dados$Especie_fct)),
 
 
 ```{r}
+mx <- dados[,2:8] %>% as.matrix()
+nvar <- 7
+n <- 70
+vmu <- apply(dados[dados$Especie==0,2:8],2,mean)
+s2 <- cov(dados[dados$Especie == 0,2:8])
+n0 <- nrow(dados[dados$Especie == 0,2:8])
+mmu <- t(matrix(t(vmu),nvar,n0))
+# Envelopes para a forma quadratica
+#
+par(mfrow = c(1,2))
+vQ <- n*apply(((mx-vmu)*(mx-vmu)%*%solve(s2)),1,sum)
 
+qqPlot(vQ,dist="chisq",df=nvar,col.lines=1,grid="FALSE",xlab="quantil da distribuição qui-quadrado",ylab="quantil da forma quadratica",cex=1.2,id.cex=1.2,main="Torrens")
 
+##
 
+vmu <- apply(dados[dados$Especie== 1,2:8],2,mean)
+s2 <- cov(dados[dados$Especie == 1,2:8])
+n0 <- nrow(dados[dados$Especie == 1,2:8])
+mmu <- t(matrix(t(vmu),nvar,n0))
+# Envelopes para a forma quadratica
+#
+
+vQ <- n*apply(((mx-vmu)*(mx-vmu)%*%solve(s2)),1,sum)
+
+qqPlot(vQ,dist="chisq",df=nvar,col.lines=1,grid="FALSE",xlab="quantil da distribuição qui-quadrado",ylab="quantil da forma quadratica",cex=1.2,id.cex=1.2,main = "Carteri")
 
 ```
 
