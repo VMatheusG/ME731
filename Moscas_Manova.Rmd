@@ -1,12 +1,15 @@
 ---
 title: "Moscas Manova"
-author: "Matheus"
-date: "6 de novembro de 2017"
+author:
+      - "Matheus Gomes"
+      - "Daniela Moraes"
+      - "Marcos Ferreira"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F)
+
 ```
 
 #Moscas
@@ -24,8 +27,9 @@ pacotes <- c("ggplot2",
              "car")
 
 ipak(pacotes)
-options(xtable.comment = FALSE)
+options(xtable.comment = FALSE,OutDec = ",")
 ```
+
 ##Lendo Os Dados
 
 ```{r}
@@ -35,12 +39,12 @@ dados <- read.table("Dados/Moscas.txt")
 nomes_COl <- c("Especie" = "Especie",
               "CompAsa" =  "Comprimento da asa",
               "LargAsa" = "Largura da asa",
-              "Comp3Palpo" = "Comprimento do terceiro palpo",
+              "Comp3Palpo" = "Comprimento do terceiro\n palpo",
               "Larg3Palpo" =  "Largura do terceiro palpo", 
-              "Comp4Palpo" = "Comprimento do quarto palpo",
+              "Comp4Palpo" = "Comprimento do quarto\n palpo",
               "Comp12Antena" = 
-           "Comprimento do 12ºsegmento\n da antena",
-            "Comp13Antena" =  "Comprimento do 13ºsegmento\n da antena")
+           "Comprimento do 12º segmento\n da antena",
+            "Comp13Antena" =  "Comprimento do 13º \n segmento da antena")
 
 
 
@@ -72,7 +76,8 @@ n <- 70
 
 ##Medidas Descritivas
 
-```{r }
+```{r results = "asis"}
+
 descritivas <- 
 dados %>% select_if(.predicate = is.integer) %>% 
   gather(Coluna,valores,-Especie) %>% 
@@ -93,8 +98,8 @@ descritivas <- descritivas[,c(1,9,2:8)]
 descritivas_2 <- nest(descritivas)
 
 for(i in 1:7){
-  print(xtable(descritivas_2$data[[i]], 
-         caption = nomes_COl[descritivas_2$Coluna[i]] ))
+  print.xtable(xtable(descritivas_2$data[[i]], 
+         caption = nomes_COl[descritivas_2$Coluna[i]]), include.rownames = F)
 }
 
 ```
@@ -104,6 +109,7 @@ for(i in 1:7){
 \newpage
 
 ##Boxplots
+
 ```{r}
 ##criando funcao para facilitar a criação dos boxplots
 boxplots_moscas <- function(coluna){
@@ -127,7 +133,9 @@ grid.arrange(graficos[[5]], graficos[[6]],
 ```
 
 ##Histograma
+
 ```{r}
+
 ##criando funcao para facilitar a criação dos boxplots
 hist_moscas <- function(coluna){
  qplot(coluna,geom = "histogram",col = I("black"),fill = I("white"),
@@ -136,8 +144,8 @@ hist_moscas <- function(coluna){
 
 graficos <- apply(dados[,2:8],2,hist_moscas)
 
-for(i in 1:7)
- graficos[[i]] <-  graficos[[i]] + labs(x = nomes_COl[i+1],y = NULL)
+for (i in 1:7)
+ graficos[[i]] <-  graficos[[i]] + labs(x = nomes_COl[i + 1],y = NULL)
   
 ##print os boxplots
 grid.arrange(graficos[[1]], graficos[[2]], 
@@ -188,6 +196,41 @@ vQ <- n*mahalanobis(mx,center = mu,cov = s2)
 qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "quantil da distribuição qui-quadrado", ylab = "quantil da forma quadratica", cex = 1.2, id.cex = 1.2, main = "Carteri")
 
 ```
+
+#Analise Inferencial
+
+
+```{r results = "asis"}
+m.ajuste <- manova(as.matrix(dados[,2:8]) ~ dados[,9])
+Wilks <- summary.manova(m.ajuste,test="Wilks")$stats
+Pillai <- summary.manova(m.ajuste,test="Pillai")$stats
+Hotelling <- summary.manova(m.ajuste, test = "Hotelling-Lawley")$stats
+Roy <- summary.manova(m.ajuste,test = "Roy")$stats
+manova_stats <- list("Wilks" = Wilks,
+                     "Pillai" =  Pillai,
+                     "Hotelling-Lawley" = Hotelling,
+                     "Roy" = Roy )
+tbl_manova <- data.frame("Estatística" = names(manova_stats),
+                         "Valor" = map_dbl(manova_stats,3),
+                        "Aproximação.pela.\n.distribuição.F" = map_dbl(manova_stats,5),
+                        "p-valor" = "< 0,0001" )  %>%
+   mutate_if(.predicate = is.numeric,funs(round(.,2))) %>%
+  as.matrix
+
+colnames(tbl_manova ) <-c("Estatística","Valor",
+                    "Aproximação pela distribuição F",
+                     "p-valor")
+tbl_m <- xtable(tbl_manova , main = "Resultado da MANOVA")
+align( tbl_m) <- c( 'l', 'p{1.5in}', rep('c',3) )
+print.xtable(tbl_m,include.rownames = F)
+
+```
+
+
+```{r}
+
+```
+
 
 
 
