@@ -16,7 +16,8 @@ pacotes <- c("ggplot2",
              "xtable",
              "dplyr",
              "purrr",
-             "tidyr")
+             "tidyr",
+             "car")
 
 ipak(pacotes)
 options(xtable.comment = FALSE)
@@ -81,8 +82,9 @@ dados %>% select_if(.predicate = is.integer) %>%
                      Mediana = "median",
                      Maximo = "max")) %>% 
   mutate_if(.predicate = is.numeric,funs(round(.,3))) %>% 
-  mutate(Especie =  factor(map_chr(Especie,Especie_chr)))
-
+  mutate(Espécie =  factor(map_chr(Especie,Especie_chr))) %>% 
+  select(-Especie)
+descritivas <- descritivas[,c(1,9,2:8)]
 
 descritivas_2 <- nest(descritivas)
 
@@ -177,7 +179,7 @@ qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "qua
 
 mu <- apply(dados[dados$Especie == 1, 2:8],2,mean)
 s2 <- cov(dados[dados$Especie == 1,2:8])
-vQ <- n*mahalanobis(mx,center = vmu,cov = s2)
+vQ <- n*mahalanobis(mx,center = mu,cov = s2)
 
 qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "quantil da distribuição qui-quadrado", ylab = "quantil da forma quadratica", cex = 1.2, id.cex = 1.2, main = "Carteri")
 
