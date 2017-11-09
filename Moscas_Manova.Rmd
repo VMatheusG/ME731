@@ -5,10 +5,14 @@ date: "6 de novembro de 2017"
 output: pdf_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
 #Moscas
 
 ##Pacotes
-```{r}
+```{r, message = F, warning = F}
 source("funcoes.R")
 pacotes <- c("ggplot2",
              "magrittr",
@@ -68,7 +72,7 @@ n <- 70
 
 ##Medidas Descritivas
 
-```{r results = "asis"}
+```{r }
 descritivas <- 
 dados %>% select_if(.predicate = is.integer) %>% 
   gather(Coluna,valores,-Especie) %>% 
