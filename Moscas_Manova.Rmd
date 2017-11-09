@@ -74,18 +74,18 @@ dados %>% select_if(.predicate = is.integer) %>%
   gather(Coluna,valores,-Especie) %>% 
   group_by(Coluna,Especie) %>% 
   summarise_if(.predicate = function(x) is.numeric(x),
-                  .funs = c(Media = "mean",
+                  .funs = c(Média = "mean",
                      DP = "sd",
                      Var. = "var",
-                     Minimo = "min",
+                     Mínimo = "min",
                      CV =  "cv",
                      Mediana = "median",
-                     Maximo = "max")) %>% 
+                     Máximo = "max")) %>% 
   mutate_if(.predicate = is.numeric,funs(round(.,3))) %>% 
   mutate(Espécie =  factor(map_chr(Especie,Especie_chr))) %>% 
   select(-Especie)
+names(descritivas )[names(descritivas ) == 'CV'] <- 'CV(%)'
 descritivas <- descritivas[,c(1,9,2:8)]
-
 descritivas_2 <- nest(descritivas)
 
 for(i in 1:7){
