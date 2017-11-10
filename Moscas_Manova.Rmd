@@ -253,5 +253,45 @@ for( i in 1:7){
 ```
 
 
+##graficos medias + intervalo de confiança
 
+```{r}
+
+
+Super_Estimativas <- tibble(Coluna = names(Estimativas),data = Estimativas) %>% unnest() %>%
+  mutate(Espécie = ifelse(term == "(Intercept)","carteri","torrens"))
+
+descritivas <- 
+dados %>% select_if(.predicate = is.integer) %>% 
+  gather(Coluna,valores,-Especie) %>% 
+  group_by(Coluna,Especie) %>% 
+  summarise_if(.predicate = function(x) is.numeric(x),
+                  .funs = c(Média = "mean")) %>% 
+  mutate_if(.predicate = is.numeric,funs(round(.,3))) %>% 
+  mutate(Espécie =  factor(map_chr(Especie,Especie_chr))) %>% 
+  select(-Especie)
+
+ IC <- left_join(Super_Estimativas,descritivas) %>% 
+  select(Coluna,Espécie,Média,std.error) %>% 
+   mutate(conf.low = Média - 1.96*std.error, 
+          conf.high = Média + 1.96*std.error)
+
+
+plots_IC <- list()
+
+for( i in 1:7){
+plots_IC[[i]] <- IC %>% 
+  filter(Coluna == IC$Coluna[i]) %>% 
+  ggplot(aes(x= Espécie, y = Média)) + geom_point() +
+  geom_errorbar(aes(ymin = conf.low,ymax = conf.high), size =  0.4,width = .3) + coord_flip() + theme_bw() + 
+  labs(title = IC$Coluna[i])
+}
+
+grid.arrange(plots_IC[[1]], plots_IC[[2]], 
+             plots_IC[[3]], plots_IC[[4]])
+
+grid.arrange(plots_IC[[5]], plots_IC[[6]], 
+             plots_IC[[7]], 
+            layout_matrix = rbind(c(1,1),c(2,3)))
+```
 
