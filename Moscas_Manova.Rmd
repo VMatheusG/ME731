@@ -39,12 +39,12 @@ dados <- read.table("Dados/Moscas.txt")
 nomes_COl <- c("Especie" = "Especie",
               "CompAsa" =  "Comprimento da asa",
               "LargAsa" = "Largura da asa",
-              "Comp3Palpo" = "Comprimento do terceiro\n palpo",
-              "Larg3Palpo" =  "Largura do terceiro palpo", 
-              "Comp4Palpo" = "Comprimento do quarto\n palpo",
+              "Comp3Palpo" = "Comprimento do terceiro\npalpo",
+              "Larg3Palpo" =  "Largura do terceiro\npalpo", 
+              "Comp4Palpo" = "Comprimento do quarto\npalpo",
               "Comp12Antena" = 
-           "Comprimento do 12º segmento\n da antena",
-            "Comp13Antena" =  "Comprimento do 13º \n segmento da antena")
+           "Comprimento do 12º\nsegmento da antena",
+            "Comp13Antena" =  "Comprimento do 13º\nsegmento da antena")
 
 
 
@@ -160,6 +160,7 @@ grid.arrange(graficos[[5]], graficos[[6]],
 
 
 ```{r}
+
 cols <- character(nrow(dados))
 cols[] <- "black"
 
@@ -217,10 +218,10 @@ tbl_manova <- data.frame("Estatística" = names(manova_stats),
    mutate_if(.predicate = is.numeric,funs(round(.,2))) %>%
   as.matrix
 
-colnames(tbl_manova ) <-c("Estatística","Valor",
+colnames(tbl_manova ) <- c("Estatística","Valor",
                     "Aproximação pela distribuição F",
                      "p-valor")
-tbl_m <- xtable(tbl_manova , main = "Resultado da MANOVA")
+tbl_m <- xtable(tbl_manova,caption = "Resultados da MANOVA")
 align( tbl_m) <- c( 'l', 'p{1.5in}', rep('c',3) )
 print.xtable(tbl_m,include.rownames = F)
 
