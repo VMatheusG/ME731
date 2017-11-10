@@ -24,7 +24,8 @@ pacotes <- c("ggplot2",
              "dplyr",
              "purrr",
              "tidyr",
-             "car")
+             "car",
+             "broom")
 
 ipak(pacotes)
 options(xtable.comment = FALSE,OutDec = ",")
@@ -227,8 +228,27 @@ print.xtable(tbl_m,include.rownames = F)
 
 ```
 
+##Estimativas 
 
-```{r}
+\newpage
+
+```{r results = "asis"}
+
+##ajustando modelo linear
+Especie <- dados[,9]
+fit.modelLM <- lm(as.matrix(dados[,2:8]) ~ Especie)
+##tranformando o resultado em uma lista de data.frames
+summ_dados <- summary(fit.modelLM)
+Estimativas <- map(summ_dados,tidy)
+##ajuste para imprimir os resultados
+names(Estimativas) <- gsub("Response ","",names(Estimativas))
+Estimativas <-  map(Estimativas, ~mutate_if(.,.predicate = is.numeric, funs(round(.,5))))
+##Imprimindo as tabelas
+for( i in 1:7){
+     print.xtable(xtable(Estimativas[[i]], 
+                         caption = 
+                         nomes_COl[names(Estimativas)[i]],digits = 4))
+}
 
 ```
 
