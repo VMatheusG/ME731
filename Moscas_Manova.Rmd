@@ -215,7 +215,7 @@ manova_stats <- list("Wilks" = Wilks,
 tbl_manova <- data.frame("Estatística" = names(manova_stats),
                          "Valor" = map_dbl(manova_stats,3),
                         "Aproximação.pela.\n.distribuição.F" = map_dbl(manova_stats,5),
-                        "p-valor" = "< 0,0001" )  %>%
+                        "p-valor" = "<0,01" )  %>%
    mutate_if(.predicate = is.numeric,funs(round(.,2))) %>%
   as.matrix
 
@@ -243,14 +243,15 @@ Estimativas <- map(summ_dados,tidy)
 ##ajuste para imprimir os resultados
 names(Estimativas) <- gsub("Response ","",names(Estimativas))
 Estimativas <-  map(Estimativas, ~mutate_if(.,.predicate = is.numeric, funs(round(.,5))))
-##Imprimindo as tabelas
-for( i in 1:7){
-     print.xtable(xtable(Estimativas[[i]], 
-                         caption = 
-                         nomes_COl[names(Estimativas)[i]], 
-                         digits = 4),include.rownames = F)
-}
 
+Super_Estimativas <- tibble(Variavel = names(Estimativas),data = Estimativas) %>% unnest() %>%
+  mutate(term = parametro(14),Variavel = acertar_coluna(Variavel),
+         p.value = ifelse(p.value<0.01,"<0.01",round(p.value,2)))
+names(Super_Estimativas) <- c("Variável","Parâmetro","Estimativa",
+                              "Erro Padrão","Estatística t",
+                              "p-valor")
+tab <- xtable(Super_Estimativas)
+print(tab,sanitize.text.function = function(x) {x},include.rownames = F,hline.after = c(-1,0,seq(2,14,2)))
 ```
 
 

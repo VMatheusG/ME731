@@ -10,3 +10,21 @@ ipak <- function(pkg){
 cv <- function(x){
   100 * sd(x)/mean(x)
 }
+
+parametro <- function(n){
+  y <- character(n)
+  for(i in 1:n){
+    y[i] <- ifelse(i %% 2 == 1,  paste0("$","\\mu_{",(i+1)/2,"}$"),
+         paste0("$","\\alpha_{2",i/2,"}$") )
+  }
+return(y)
+}
+
+acertar_coluna <- function(x){
+  y <- character(length(x))
+  for( i  in 1:length(x))
+    y[i] <- ifelse(i%%2==0,NA,x[i])
+
+  return(y)
+}
+
