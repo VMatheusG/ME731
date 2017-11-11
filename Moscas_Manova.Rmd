@@ -201,6 +201,17 @@ qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "qua
 
 #Analise Inferencial
 
+$$
+Y_{ijk} = \mu_k + \alpha_{ik} + \xi_{ijk}, \quad \alpha_{1k} = 0, \forall k, \quad 
+\xi_{ij} 
+	\sim N_7(0,\Sigma)
+$$
+
+i = 1,2 (grupo, 1-Carteri, 2-Torrens)
+
+j = 1, 2,..., 35 (indivíduo)
+
+k = 1, 2,..., 7 (variaveis)
 
 ```{r results = "asis"}
 m.ajuste <- manova(as.matrix(dados[,2:8]) ~ dados[,9])
@@ -250,54 +261,11 @@ Super_Estimativas <- tibble(Variavel = names(Estimativas),data = Estimativas) %>
 names(Super_Estimativas) <- c("Variável","Parâmetro","Estimativa",
                               "Erro Padrão","Estatística t",
                               "p-valor")
-tab <- xtable(Super_Estimativas)
+tab <- xtable(Super_Estimativas,align = "lllrrrc")
 print(tab,sanitize.text.function = function(x) {x},include.rownames = F,hline.after = c(-1,0,seq(2,14,2)))
 ```
 
 
-##graficos medias + intervalo de confiança
-
-```{r}
-
-
-Super_Estimativas <- tibble(Coluna = names(Estimativas),data = Estimativas) %>% unnest() %>%
-  mutate(Espécie = ifelse(term == "(Intercept)","carteri","torrens"))
-
-descritivas <- 
-dados %>% select_if(.predicate = is.integer) %>% 
-  gather(Coluna,valores,-Especie) %>% 
-  group_by(Coluna,Especie) %>% 
-  summarise_if(.predicate = function(x) is.numeric(x),
-                  .funs = c(Média = "mean")) %>% 
-  mutate_if(.predicate = is.numeric,funs(round(.,3))) %>% 
-  mutate(Espécie =  factor(map_chr(Especie,Especie_chr))) %>% 
-  select(-Especie)
-
- IC <- left_join(Super_Estimativas,descritivas) %>% 
-  select(Coluna,Espécie,Média,std.error) %>% 
-   mutate(conf.low = Média - 1.96*std.error, 
-          conf.high = Média + 1.96*std.error)
-
-
-plots_IC <- list()
-
-for( i in 1:7){
-plots_IC[[i]] <- IC %>% 
-  filter(Coluna == unique(IC$Coluna)[i]) %>% 
-  ggplot(aes(x= Espécie, y = Média)) + geom_point() +
-  geom_errorbar(aes(ymin = conf.low,ymax = conf.high), size =  0.4,width = .3) + coord_flip() + theme_bw() + 
-  labs(title =  nomes_COl[unique(IC$Coluna)[i]]) +
-   theme(plot.title = element_text(lineheight=.8, 
-                                        face="bold",hjust = 0.5)) 
-}
-
-grid.arrange(plots_IC[[1]], plots_IC[[2]], 
-             plots_IC[[3]], plots_IC[[4]])
-
-grid.arrange(plots_IC[[5]], plots_IC[[6]], 
-             plots_IC[[7]], 
-            layout_matrix = rbind(c(1,1),c(2,3)))
-```
 
 ##CBU = M
 
@@ -325,7 +293,53 @@ for(i in 1:7) {
 CBU <- (CBU %>% mutate(var = names(dados[,2:8])) )[,c(3,1,2)]
 names(CBU) <- c("Variável","Estatística","p-valor")
 
-print.xtable(xtable(CBU),include.rownames = F)
+print.xtable(xtable(CBU,align = "llrc"),include.rownames = F,digits = 2)
 
 ```
 
+##Medias preditas + intervalo de confiança
+
+```{r}
+
+
+Super_Estimativas <- tibble(Coluna = names(Estimativas),data = Estimativas) %>% unnest() %>%
+  mutate(Espécie = 
+           factor(ifelse(term == "(Intercept)","carteri","torrens")))
+
+descritivas <-
+dados %>% select_if(.predicate = is.integer) %>%
+  gather(Coluna,valores,-Especie) %>%
+  group_by(Coluna,Especie) %>%
+  summarise_if(.predicate = function(x) is.numeric(x),
+                  .funs = c(Média = "mean")) %>%
+  mutate_if(.predicate = is.numeric,funs(round(.,3))) %>%
+  mutate(Espécie =  factor(map_chr(Especie,Especie_chr))) %>%
+  select(-Especie)
+
+ IC <- left_join(Super_Estimativas,descritivas,by = c("Coluna", "Espécie")) %>%
+  select(Coluna,Espécie,Média,std.error) %>%
+   mutate(conf.low = Média - 1.96*std.error,
+          conf.high = Média + 1.96*std.error)
+
+
+plots_IC <- list()
+
+for( i in 1:7){
+plots_IC[[i]] <- IC %>%
+  filter(Coluna == unique(IC$Coluna)[i]) %>%
+  ggplot(aes(x= Espécie, y = Média)) + geom_point() +
+  geom_errorbar(aes(ymin = conf.low,ymax = conf.high), size =  0.4,width = .3) + coord_flip() + theme_bw() +
+  labs(title =  nomes_COl[unique(IC$Coluna)[i]]) +
+   theme(plot.title = element_text(lineheight=.8,
+                                        face="bold",hjust = 0.5))
+}
+
+grid.arrange(plots_IC[[1]], plots_IC[[2]],
+             plots_IC[[3]], plots_IC[[4]])
+
+grid.arrange(plots_IC[[5]], plots_IC[[6]],
+             plots_IC[[7]],
+            layout_matrix = rbind(c(1,1),c(2,3)))
+```
+
+##Residuos
