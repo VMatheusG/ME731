@@ -247,7 +247,8 @@ Estimativas <-  map(Estimativas, ~mutate_if(.,.predicate = is.numeric, funs(roun
 for( i in 1:7){
      print.xtable(xtable(Estimativas[[i]], 
                          caption = 
-                         nomes_COl[names(Estimativas)[i]],digits = 4))
+                         nomes_COl[names(Estimativas)[i]], 
+                         digits = 4),include.rownames = F)
 }
 
 ```
@@ -281,10 +282,12 @@ plots_IC <- list()
 
 for( i in 1:7){
 plots_IC[[i]] <- IC %>% 
-  filter(Coluna == IC$Coluna[i]) %>% 
+  filter(Coluna == unique(IC$Coluna)[i]) %>% 
   ggplot(aes(x= Espécie, y = Média)) + geom_point() +
   geom_errorbar(aes(ymin = conf.low,ymax = conf.high), size =  0.4,width = .3) + coord_flip() + theme_bw() + 
-  labs(title = IC$Coluna[i])
+  labs(title =  nomes_COl[unique(IC$Coluna)[i]]) +
+   theme(plot.title = element_text(lineheight=.8, 
+                                        face="bold",hjust = 0.5)) 
 }
 
 grid.arrange(plots_IC[[1]], plots_IC[[2]], 
@@ -293,5 +296,35 @@ grid.arrange(plots_IC[[1]], plots_IC[[2]],
 grid.arrange(plots_IC[[5]], plots_IC[[6]], 
              plots_IC[[7]], 
             layout_matrix = rbind(c(1,1),c(2,3)))
+```
+
+##CBU = M
+
+```{r results = "asis"}
+source("MANOVA_CAIO.R")
+p <- 7 ##variaveis
+G <- 2 ## grupos
+m.Sigma.P <- Box.teste.Igual.MCov(dados[,2:8], as.matrix(dados[,1]+1) ,rbind(35,35),G)$Sigma.P
+m.ajuste <- manova(as.matrix(dados[,2:8]) ~ as.factor(dados[,1]+1))
+m.C1 <- cbind(0,1) #  Torrens X Carteri
+m.U <- rbind(1,0,0,0,0,0,0)
+m.M <- 0
+
+for(i in 1:7) {
+
+  if( i == 1)
+     CBU <- TesteF.CBU.M(m.ajuste,m.Sigma.P,p,G,m.C1,m.U,m.M)
+  else{
+    m.U[i] <- 1 
+    m.U[i - 1] <- 0
+    CBU <- rbind(CBU, TesteF.CBU.M(m.ajuste ,m.Sigma.P, p, G,
+                                   m.C1, m.U, m.M))
+  }
+}
+CBU <- (CBU %>% mutate(var = names(dados[,2:8])) )[,c(3,1,2)]
+names(CBU) <- c("Variável","Estatística","p-valor")
+
+print.xtable(xtable(CBU),include.rownames = F)
+
 ```
 
