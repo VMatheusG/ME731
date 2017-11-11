@@ -342,4 +342,21 @@ grid.arrange(plots_IC[[5]], plots_IC[[6]],
             layout_matrix = rbind(c(1,1),c(2,3)))
 ```
 
-##Residuos
+#Residuos
+\newpage
+
+```{r}
+source("Mresiduos.R",encoding = "UTF-8")
+
+typeresid <- "univariate"
+wplot <- "diagnostics"
+mY <- as.matrix(dados[,2:8])
+var <- 1
+for(i in 1:7){
+  print(nomes_COl[i+1])
+gen.graf.resid(mY,m.ajuste,i,typeresid,wplot)
+
+}
+
+```
+
