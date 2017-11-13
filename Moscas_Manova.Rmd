@@ -70,8 +70,8 @@ dados %<>% mutate( Especie_fct =
 
 ```{r}
 mx <- dados[,2:8] %>% as.matrix()
-nvar <- 7
-n <- 70
+nvar <- ncol(mx)
+n <- nrow(mx)
 ```
 
 
@@ -359,4 +359,33 @@ gen.graf.resid(mY,m.ajuste,i,typeresid,wplot)
 }
 
 ```
+
+
+#Análise de componentes principais
+
+
+
+```{r}
+moscas_pca <- prcomp(dados[,2:8], center = T, scale. = T)
+var_comp <- moscas_pca$sdev^2
+
+qplot(y = var_comp,x = paste0("Comp ",1:7), geom ="point") + 
+  geom_line(group = 1) +  theme_bw() + 
+  labs(x = "Componente", y = "Variância")
+
+##vetor componentes
+v_comp <- moscas_pca$x[,1:3] %>% as.data.frame()
+
+plots_disp <- list()
+
+plots_disp[[1]] <- ggplot(v_comp,aes(PC1,PC2)) + geom_point() + theme_bw()
+
+plots_disp[[2]] <- ggplot(v_comp,aes(PC1,PC3)) + geom_point() + theme_bw()
+
+plots_disp[[3]] <- ggplot(v_comp,aes(PC2,PC3)) + geom_point() + theme_bw()
+
+grid.arrange(plots_disp[[1]],plots_disp[[2]],plots_disp[[3]],
+             layout_matrix = rbind(c(1,2,3),c(1,2,3)))
+```
+
 
