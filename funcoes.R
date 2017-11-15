@@ -11,11 +11,11 @@ cv <- function(x){
   100 * sd(x)/mean(x)
 }
 
-parametro <- function(n){
+parametro <- function(n,c){
   y <- character(n)
   for(i in 1:n){
     y[i] <- ifelse(i %% 2 == 1,  paste0("$","\\mu_{",(i+1)/2,"}$"),
-         paste0("$","\\alpha_{2",i/2,"}$") )
+         paste0("$","\\alpha_{",c,i/2,"}$") )
   }
 return(y)
 }

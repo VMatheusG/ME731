@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = F)
 ##Pacotes
 ```{r, message = F, warning = F}
 source("funcoes.R")
+source("Mresiduos.R",encoding = "UTF-8")
 pacotes <- c("ggplot2",
              "magrittr",
              "gridExtra",
@@ -258,7 +259,7 @@ names(Estimativas) <- gsub("Response ","",names(Estimativas))
 Estimativas <-  map(Estimativas, ~mutate_if(.,.predicate = is.numeric, funs(round(.,5))))
 
 Super_Estimativas <- tibble(Variavel = names(Estimativas),data = Estimativas) %>% unnest() %>%
-  mutate(term = parametro(14),Variavel = acertar_coluna(Variavel),
+  mutate(term = parametro(14,"2"),Variavel = acertar_coluna(Variavel),
          p.value = ifelse(p.value<0.01,"<0.01",round(p.value,2)))
 names(Super_Estimativas) <- c("Variável","Parâmetro","Estimativa",
                               "Erro Padrão","Estatística t",
@@ -348,7 +349,6 @@ grid.arrange(plots_IC[[5]], plots_IC[[6]],
 \newpage
 
 ```{r}
-source("Mresiduos.R",encoding = "UTF-8")
 
 typeresid <- "univariate"
 wplot <- "diagnostics"
@@ -368,6 +368,7 @@ gen.graf.resid(mY,m.ajuste,i,typeresid,wplot)
 
 
 ```{r results="asis"}
+
 moscas_pca <- prcomp(dados[,2:8], center = T, scale. = T)
 var_comp <- moscas_pca$sdev^2
 ##tabela PVE e PVEA
@@ -474,11 +475,73 @@ Especie_dados $data[[1]] %>%
 Especie_dados $data[[2]] %>% 
   apply(2,qqPlot,xlab = "",ylab = "")
 
-title(ylab = "         carteri                       torrens",
+title(ylab = "quantil do componente",
       xlab = "quantil N(0,1)",
-      main = "a                          b                 b",
-      outer = TRUE, line = 0)
+      outer = TRUE, line = 1)
+
+mtext("Comp. 1                            Comp. 2                              Comp. 3", side=3, line=1,outer = T)
+mtext("         carteri                       torrens",
+      side=4, line=0,outer = T)
 
 ```
+
+##Biplot
+
+```{r}
+par(mfrow = c(1,3), mar = c(0, 4, 0, 0) + 0.1,cex=.6,cex.axis = 0.5,cex.lab = .96,mgp = c(1.5, .5, 0))
+biplot(moscas_pca,xlabs = v_comp$Text,xlab ="Comp. 1",ylab ="Comp. 2")
+biplot(moscas_pca,c(1,3),xlabs = v_comp$Text,xlab ="Comp. 1",ylab ="Comp. 3")
+biplot(moscas_pca,c(2,3),xlabs = v_comp$Text,xlab ="Comp. 2",ylab ="Comp. 3")
+
+```
+
+##Regressao Linear
+
+
+$$
+Y_{ij} = \mu + \alpha_{i} + \epsilon_{ij}  \qquad 
+\epsilon_{ij} 
+	\sim N(0,\sigma^2) \qquad \alpha_{1} = 0 \quad e\quad\alpha_{2} \ne 0
+$$
+
+i = 1,2 (1=Carteri,2 = Torrens)
+j = 1,...,35 (individuos)
+
+```{r results="asis"}
+model_cp1 <- lm(v_comp[,1]~v_comp[,4])
+par_model <- tidy(model_cp1) %>% 
+   mutate_if(.predicate = is.numeric,funs(round(.,2))) %>% 
+  mutate(term = parametro(2,""))
+##estimativas Parametos
+par_model$term[1] <- sub("_\\{1\\}","",par_model$term[1])
+par_model$term[2] <- sub("1","2",par_model$term[2])
+estim_medias <- par_model %>% select(term,estimate,std.error)
+names(par_model) <- c("Parâmetro","Estimativa","EP","Estatística t","p-valor")
+print(xtable(par_model),include.rownames = F,sanitize.text.function = function(x) {x})
+##intervalo de conf
+estim_medias$estimate[2] <- sum(estim_medias$estimate)
+estim_medias$term <- c("carteri","torrens")
+estim_medias %<>% 
+mutate(conf.low = estimate - 1.96*std.error,
+          conf.high = estimate + 1.96*std.error)
+names(estim_medias)[1:2] <- c("Espécie","Média")
+estim_medias %>% 
+ggplot(aes(x= Espécie, y = Média)) + geom_point() +
+  geom_errorbar(aes(ymin = conf.low,ymax = conf.high), size =  0.4,width = .3) + coord_flip() + theme_bw() +
+   theme(plot.title = element_text(lineheight=.8,
+                                        face="bold",hjust = 0.5))
+
+
+```
+
+##Analize residuos PCA1
+
+```{r}
+diagnorm(model_cp1)
+
+```
+
+
+
 
 
