@@ -25,7 +25,8 @@ pacotes <- c("magrittr",
              "broom",
              "ca",
              "tables",
-             "forcats")
+             "forcats",
+             "tibble")
 
 ipak(pacotes)
 options(xtable.comment = FALSE,OutDec = ",")
@@ -79,9 +80,26 @@ qui_q$`Graus de liberdade` %<>% as.integer()
 print(xtable(qui_q,digits = 3),include.rownames = F )
 ```
 
+##proporção
+
+```{r results="asis"}
+prop <- dados/nrow(dd)*100
+sum_row <- apply(prop,1,sum) %>% simplify2array()
+sum_col <- apply(prop,2,sum) %>% simplify2array()
+prop <- cbind(prop,sum_row) %>% 
+rbind(sum_col)
+names(prop)[6] <- "Total"
+prop$Total[5] <- sum(prop$Total[1:4])
+prop %<>%  mutate_if(.predicate = is.numeric,funs(round(.,2)))
+row.names(prop) <- c(saude,"Total")
+xtable(prop)
+```
+
+
 ##Perfis das linhas e perfis das colunas
 
 ```{r results="asis"}
+library(stargazer)
 resultaux <- ACaux(as.matrix(dados))
 m.R<-resultaux$m.R %>% data.frame()
 names(m.R)<- c("A (Alto)","B","C","D","E (Baixo)","Total")
@@ -98,20 +116,45 @@ xtable(100*m.C,digits=2,caption = "perfil colunas")
 
 ##Inercia
 
-```{r results="asis"}
-resultCA <- ca(dados) # names(resultCA)
-inercia<-summary(resultCA)$scree # names(summary(resultCA))
-xtable(cbind(inercia[,2], inercia[,2]^2,inercia[,3],inercia[,4]),digits=4)
+```{r results="asis",warning=F,message=F}
+
+resultCA <- ca(dados)
+inercia <- summary(resultCA)$scree
+inercia_tbl <- cbind(sqrt(inercia[,2]), inercia[,2], inercia[,3], inercia[,4]) %>% data.frame()
+inercia_tbl %<>%  mutate_if(.predicate = is.numeric,funs(round(.,4)))
+names(inercia_tbl) <- c("Valor Singular","Inércia Princ.",
+                        "Porcentual","Porcentual Acum.")
+print(xtable(inercia_tbl,digits = c(1,3,3,2,2)), 
+      include.rownames = F)
 ```
 
 ##componentes
 
 ```{r results="asis"}
 resultFCA <- plot(resultCA,xlab="componente 1",ylab="componente 2",cex=1.2)
-xtable(resultFCA$rows,digits=4)
-xtable(resultFCA$cols,digits=4)
-biplot(resultFCA$rows,resultFCA$cols,var.axes=FALSE,xlab="componente 1", ylab="componente 2",cex=1.2,xlim=c(-0.9,0.5))
+linhas <- resultFCA$rows %>% data.frame() 
+colunas <- resultFCA$cols %>% data.frame() 
+linhas <- tibble::rownames_to_column(linhas,"Categoria")
+colunas <- tibble::rownames_to_column(colunas,"Categoria")
+
+linhas %<>% mutate_if(.predicate = is.numeric,funs(round(.,2)))
+colunas %<>% mutate_if(.predicate = is.numeric,funs(round(.,2)))
+perfils <- bind_rows(linhas,colunas)
+perfils$P <- c("Perfil Linhas",NA,NA,NA,"Perfil Colunas",NA,NA,NA,NA)
+perfils <- perfils[,c(4,1:3)]
+names(perfils) <- c("","Categoria","Componente 1","Componeste 2")
+
+print(xtable(perfils),include.rownames = F)
+```
+
+
+##biplot
+
+```{r}
+par(mfrow = c(1,1), mar = c(3, 0, 2, 0),cex=.9,cex.axis = 0.8,cex.lab = 1.1,mgp = c(1.5, .5, 0))
+biplot(resultFCA$rows,resultFCA$cols,var.axes=FALSE,xlab="componente 1", ylab="componente 2",xlim=c(-.2,0.2))
 abline(0,0,lty=2)
 abline(v=0,lty=2)
 ```
+
 
