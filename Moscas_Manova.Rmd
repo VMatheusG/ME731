@@ -25,7 +25,9 @@ pacotes <- c("ggplot2",
              "purrr",
              "tidyr",
              "car",
-             "broom")
+             "broom",
+             "grid",
+             "stringr")
 
 ipak(pacotes)
 options(xtable.comment = FALSE,OutDec = ",")
@@ -365,27 +367,118 @@ gen.graf.resid(mY,m.ajuste,i,typeresid,wplot)
 
 
 
-```{r}
+```{r results="asis"}
 moscas_pca <- prcomp(dados[,2:8], center = T, scale. = T)
 var_comp <- moscas_pca$sdev^2
+##tabela PVE e PVEA
 
-qplot(y = var_comp,x = paste0("Comp ",1:7), geom ="point") + 
+PVS <- rbind(rbind(moscas_pca$sdev),rbind(var_comp/sum(var_comp)),
+                      rbind(cumsum(var_comp/sum(var_comp)))) %>% data.frame()
+names(PVS) <-  paste0("Comp. ",1:7)
+row.names(PVS) <- c("Dp","PVE","PVEA")
+xtable(PVS)
+
+##grafico variancia dos componetes
+
+v_comp <- moscas_pca$x[,1:3] %>% as.data.frame() %>% 
+  mutate(Especie = dados$Especie_fct,Text = ifelse(Especie=="torrens","T","C"))
+
+names(v_comp)[1:3] <-  paste0("Comp. ",1:3)
+
+qplot(y = var_comp,x = paste0("Comp. ",1:7), geom ="point") + 
   geom_line(group = 1) +  theme_bw() + 
   labs(x = "Componente", y = "Variância")
+##tabela de coeficientes e correlacoes
+coef_comp <- moscas_pca$rotation[,1:3] %>% round(2) %>% 
+  apply(2,as.character)
+corr_pca <- cor(dados[,2:8],moscas_pca$x[,1:3]) %>% round(2) %>%
+  apply(2,as.character) %>% apply(2,function(x) paste0("(",x,")"))
 
-##vetor componentes
-v_comp <- moscas_pca$x[,1:3] %>% as.data.frame()
+for( i in 1:3) 
+ coef_comp[,i] <- 
+ str_c(coef_comp[,i],corr_pca[,i])
 
+coef_comp %<>% as.data.frame() %>% mutate(variavel = names(dados[,2:8]))
+coef_comp <- coef_comp[,c(4,1:3)]
+names(coef_comp) <- c("Variável",paste0("Componente ",1:3))
+print(xtable(coef_comp),include.rownames = F)
+
+
+```
+
+##Grafico de dispersao
+
+```{r}
+##vetor componentes e graficos de dispersao
+
+v_comp <- moscas_pca$x[,1:3] %>% as.data.frame() %>% 
+  mutate(Especie = dados$Especie_fct,Text = ifelse(Especie=="torrens","T","C"))
+
+names(v_comp)[1:3] <-  paste0("PC",1:3)
 plots_disp <- list()
+plots_disp[[1]] <- ggplot(v_comp,aes(PC1,PC2,col = Especie,
+                                     label = factor(Text))) + 
+  geom_text(show.legend = F) + theme_bw() +
+  coord_fixed(ratio = 1.1) +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(x = "Comp. 1",y = "Comp. 2")
 
-plots_disp[[1]] <- ggplot(v_comp,aes(PC1,PC2)) + geom_point() + theme_bw()
+plots_disp[[2]] <- ggplot(v_comp,aes(PC1,PC3,col = Especie,label = factor(Text))) + geom_text(show.legend = F) + theme_bw() +  coord_fixed(ratio = 1) +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(x = "Comp. 1",y = "Comp. 3")
 
-plots_disp[[2]] <- ggplot(v_comp,aes(PC1,PC3)) + geom_point() + theme_bw()
+plots_disp[[3]] <- ggplot(v_comp,aes(PC2,PC3,col = Especie,label = factor(Text))) + geom_text(show.legend = F) + theme_bw() + coord_fixed(ratio = 1) +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(x = "Comp. 2",y = "Comp. 3")
 
-plots_disp[[3]] <- ggplot(v_comp,aes(PC2,PC3)) + geom_point() + theme_bw()
 
-grid.arrange(plots_disp[[1]],plots_disp[[2]],plots_disp[[3]],
-             layout_matrix = rbind(c(1,2,3),c(1,2,3)))
+grid.draw(cbind(ggplotGrob(plots_disp[[1]]),
+                ggplotGrob(plots_disp[[2]]),
+                ggplotGrob(plots_disp[[3]]),size = "first"))
+```
+
+
+
+##Boxplots
+
+```{r}
+v_comp %>% 
+  gather(PCS,Valor,-Especie,-Text) %>% 
+ggplot(aes(x = Especie,y = Valor)) + geom_boxplot() + facet_grid(.~PCS) + theme_bw() + labs(x = "Espécie")
+
+```
+
+##Histrograma
+
+```{r}
+
+v_comp %>% 
+  gather(PCS,Valor,-Especie,-Text) %>% 
+  ggplot(aes(x= Valor)) + geom_histogram(binwidth = 1,col = I("black"),fill = I("white")) +
+  facet_grid(Especie ~ PCS) + theme_bw() + labs(y = "contagem")
+
+```
+
+##QQplot
+
+
+```{r}
+# par_base <- par()
+par(mfrow = c(2,3),
+          mar=c(2, 1.8, 0, 1) + 0.1,cex=.9, oma = c(2, 2, 2, 2) )
+Especie_dados <- v_comp %>% select(-Text) %>% 
+  group_by(Especie) %>% nest()
+
+Especie_dados $data[[1]] %>% 
+  apply(2,qqPlot,xlab = "",ylab = "")
+Especie_dados $data[[2]] %>% 
+  apply(2,qqPlot,xlab = "",ylab = "")
+
+title(ylab = "         carteri                       torrens",
+      xlab = "quantil N(0,1)",
+      main = "a                          b                 b",
+      outer = TRUE, line = 0)
+
 ```
 
 
