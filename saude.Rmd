@@ -1,0 +1,117 @@
+---
+title: "Saude_Mental"
+author:
+      - "Matheus Gomes"
+      - "Daniela Moraes"
+      - "Marcos Ferreira"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+
+```
+
+#Saude
+
+##Pacotes
+```{r, message = F, warning = F}
+source("funcoes.R")
+source("ACaux.R")
+pacotes <- c("magrittr",
+             "xtable",
+             "dplyr",
+             "tidyr",
+             "broom",
+             "ca",
+             "tables",
+             "forcats")
+
+ipak(pacotes)
+options(xtable.comment = FALSE,OutDec = ",")
+```
+
+##Lendo Os Dados
+
+```{r}
+dados <- read.table("Dados/Saudemental.txt")
+
+nomesCOL <- c("A","B","C","D","E")
+names(dados) <- c("A (Alto)","B","C","D","E (Baixo)")
+saude <- c("Boa",
+           "Presença fraca de sintomas",
+           "Presença moderada de sintomas",
+           "Debilitado")
+rownames(dados) <- saude
+##organizando
+data <- dados %>% mutate(S = factor(saude))
+data %<>% gather(Eco,Cont,-S)
+dd <- data[rep(row.names(data), data$Cont), 1:2]
+dd$S <- factor(dd$S) %>% fct_inorder()
+tbl <- dd %$% ftable(S,Eco,dnn = c("Saúde mental","Status socioeconômico dos pais"))
+
+
+```
+
+##Praparação
+
+```{r results="asis"}
+xtableFtable(tbl)
+```
+
+##teste qui quadrado
+
+$$p_{ij}=p_{i}\times p_{j} \qquad vs\qquad p_{ij}\ne p_{i}\times p_{j} \quad
+\verb!para pelo menos um par(i,j)!$$
+
+pi a proporção de observações na categoria i da variável “saúde mental”;
+
+pj proporção de
+observações na categoria j da variável “status socioeconômico dos pais”.
+
+
+```{r results= "asis"}
+qui_q <- tidy(chisq.test(dados))[c(1,3,2)] %>% as.data.frame() %>% 
+   mutate_if(.predicate = is.numeric,funs(round(.,4)))
+names(qui_q) <- c("Estatística Q","Graus de liberdade","p-valor")
+qui_q$`Graus de liberdade` %<>% as.integer()
+
+print(xtable(qui_q,digits = 3),include.rownames = F )
+```
+
+##Perfis das linhas e perfis das colunas
+
+```{r results="asis"}
+resultaux <- ACaux(as.matrix(dados))
+m.R<-resultaux$m.R %>% data.frame()
+names(m.R)<- c("A (Alto)","B","C","D","E (Baixo)","Total")
+row.names(m.R) <- c(saude,"Total")
+m.C<-resultaux$m.C %>% data.frame()
+row.names(m.C)[5] <- "Total"
+names(m.C)<-c("A (Alto)","B","C","D","E (Baixo)","Total")
+xtable(100*m.R,digits=2,caption = "perfil linhas")
+xtable(100*m.C,digits=2,caption = "perfil colunas")
+
+```
+
+
+
+##Inercia
+
+```{r results="asis"}
+resultCA <- ca(dados) # names(resultCA)
+inercia<-summary(resultCA)$scree # names(summary(resultCA))
+xtable(cbind(inercia[,2], inercia[,2]^2,inercia[,3],inercia[,4]),digits=4)
+```
+
+##componentes
+
+```{r results="asis"}
+resultFCA <- plot(resultCA,xlab="componente 1",ylab="componente 2",cex=1.2)
+xtable(resultFCA$rows,digits=4)
+xtable(resultFCA$cols,digits=4)
+biplot(resultFCA$rows,resultFCA$cols,var.axes=FALSE,xlab="componente 1", ylab="componente 2",cex=1.2,xlim=c(-0.9,0.5))
+abline(0,0,lty=2)
+abline(v=0,lty=2)
+```
+
