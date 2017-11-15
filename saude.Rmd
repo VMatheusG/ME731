@@ -92,7 +92,16 @@ names(prop)[6] <- "Total"
 prop$Total[5] <- sum(prop$Total[1:4])
 prop %<>%  mutate_if(.predicate = is.numeric,funs(round(.,2)))
 row.names(prop) <- c(saude,"Total")
-xtable(prop)
+
+
+newrol <- rep(NA,6)
+newcol <- rep(NA,6)
+prop1 <- rbind(newrol,prop) 
+prop1 <- cbind(newcol,prop1)
+names(prop1)[1] <- "Status socioeconômico\n dos pais"
+row.names(prop1)[1] <- "Saúde Mental"
+print(xtable(prop1,align = "ll|lrcccc"),scalebox='0.85',
+      hline.after = c(-1,1,nrow(prop1),nrow(prop1)-1))
 ```
 
 
@@ -144,7 +153,8 @@ perfils$P <- c("Perfil Linhas",NA,NA,NA,"Perfil Colunas",NA,NA,NA,NA)
 perfils <- perfils[,c(4,1:3)]
 names(perfils) <- c("","Categoria","Componente 1","Componeste 2")
 
-print(xtable(perfils),include.rownames = F)
+print(xtable(perfils),include.rownames = F, 
+      hline.after = c(-1,0,nrow(perfils),4))
 ```
 
 
