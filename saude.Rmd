@@ -108,16 +108,36 @@ print(xtable(prop1,align = "ll|lrcccc"),scalebox='0.85',
 ##Perfis das linhas e perfis das colunas
 
 ```{r results="asis"}
-library(stargazer)
+
 resultaux <- ACaux(as.matrix(dados))
-m.R<-resultaux$m.R %>% data.frame()
+m.R<-100*resultaux$m.R %>% data.frame()
 names(m.R)<- c("A (Alto)","B","C","D","E (Baixo)","Total")
 row.names(m.R) <- c(saude,"Total")
-m.C<-resultaux$m.C %>% data.frame()
+
+newrol <- rep(NA,6)
+newcol <- rep(NA,6)
+prop1 <- rbind(newrol,m.R) 
+prop1 <- cbind(newcol,prop1)
+names(prop1)[1] <- "Status socioeconômico\n dos pais"
+row.names(prop1)[1] <- "Saúde Mental"
+print(xtable(prop1,align = "ll|lrcccc",caption = "perfil linhas",digits=2),scalebox='0.85',
+      hline.after = c(-1,1,nrow(prop1),nrow(prop1)-1))
+
+
+m.C<-100*resultaux$m.C %>% data.frame()
 row.names(m.C)[5] <- "Total"
 names(m.C)<-c("A (Alto)","B","C","D","E (Baixo)","Total")
-xtable(100*m.R,digits=2,caption = "perfil linhas")
-xtable(100*m.C,digits=2,caption = "perfil colunas")
+newrol <- rep(NA,6)
+newcol <- rep(NA,6)
+prop1 <- rbind(newrol,m.C) 
+prop1 <- cbind(newcol,prop1)
+names(prop1)[1] <- "Status socioeconômico\n dos pais"
+row.names(prop1)[1] <- "Saúde Mental"
+print(xtable(prop1,align = "ll|lrcccc",caption = "perfil colunas",digits=2),scalebox='0.85',
+      hline.after = c(-1,1,nrow(prop1),nrow(prop1)-1))
+
+# xtable(100*m.R,digits=2,caption = "perfil linhas")
+# xtable(100*m.C,digits=2,caption = "perfil colunas")
 
 ```
 
