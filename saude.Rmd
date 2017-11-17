@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = F)
 #Saude
 
 ##Pacotes
+
 ```{r, message = F, warning = F}
 source("funcoes.R")
 source("ACaux.R")
@@ -29,7 +30,7 @@ pacotes <- c("magrittr",
              "tibble")
 
 ipak(pacotes)
-options(xtable.comment = FALSE,OutDec = ",")
+options(xtable.comment = FALSE, OutDec = ",")
 ```
 
 ##Lendo Os Dados
@@ -65,10 +66,13 @@ xtableFtable(tbl)
 $$p_{ij}=p_{i}\times p_{j} \qquad vs\qquad p_{ij}\ne p_{i}\times p_{j} \quad
 \verb!para pelo menos um par(i,j)!$$
 
-pi a proporção de observações na categoria i da variável “saúde mental”;
+$p_{ij}$ a proporção de observações pertencentes, ao mesmo tempo, às categorias i da variável “saúde mental” e j da variável
+“status socioeconômico dos pais”
 
-pj proporção de
-observações na categoria j da variável “status socioeconômico dos pais”.
+$p_i$ a proporção de observações na categoria i da variável “saúde mental”
+
+$p_j$ proporção de
+observações na categoria j da variável “status socioeconômico dos pais”
 
 
 ```{r results= "asis"}
@@ -79,6 +83,8 @@ qui_q$`Graus de liberdade` %<>% as.integer()
 
 print(xtable(qui_q,digits = 3),include.rownames = F )
 ```
+
+
 
 ##proporção
 
@@ -100,7 +106,7 @@ prop1 <- rbind(newrol,prop)
 prop1 <- cbind(newcol,prop1)
 names(prop1)[1] <- "Status socioeconômico\n dos pais"
 row.names(prop1)[1] <- "Saúde Mental"
-print(xtable(prop1,align = "ll|lrcccc"),scalebox='0.85',
+print(xtable(prop1,align = "ll|lrcccc",caption = "proporção"),scalebox='0.9',
       hline.after = c(-1,1,nrow(prop1),nrow(prop1)-1))
 ```
 
@@ -120,7 +126,7 @@ prop1 <- rbind(newrol,m.R)
 prop1 <- cbind(newcol,prop1)
 names(prop1)[1] <- "Status socioeconômico\n dos pais"
 row.names(prop1)[1] <- "Saúde Mental"
-print(xtable(prop1,align = "ll|lrcccc",caption = "perfil linhas",digits=2),scalebox='0.85',
+print(xtable(prop1,align = "ll|lrcccc",caption = "perfil linhas",digits = 2),scalebox='0.9',
       hline.after = c(-1,1,nrow(prop1),nrow(prop1)-1))
 
 
@@ -133,11 +139,12 @@ prop1 <- rbind(newrol,m.C)
 prop1 <- cbind(newcol,prop1)
 names(prop1)[1] <- "Status socioeconômico\n dos pais"
 row.names(prop1)[1] <- "Saúde Mental"
-print(xtable(prop1,align = "ll|lrcccc",caption = "perfil colunas",digits=2),scalebox='0.85',
-      hline.after = c(-1,1,nrow(prop1),nrow(prop1)-1))
+print(xtable(prop1,align = "ll|lrcccc", 
+             caption = "perfil colunas",
+             digits=  2),scalebox='0.9',
+      hline.after = c(-1,1,nrow(prop1),nrow(prop1) - 1))
 
-# xtable(100*m.R,digits=2,caption = "perfil linhas")
-# xtable(100*m.C,digits=2,caption = "perfil colunas")
+
 
 ```
 
@@ -153,7 +160,7 @@ inercia_tbl <- cbind(sqrt(inercia[,2]), inercia[,2], inercia[,3], inercia[,4]) %
 inercia_tbl %<>%  mutate_if(.predicate = is.numeric,funs(round(.,4)))
 names(inercia_tbl) <- c("Valor Singular","Inércia Princ.",
                         "Porcentual","Porcentual Acum.")
-print(xtable(inercia_tbl,digits = c(1,3,3,2,2)), 
+print(xtable(inercia_tbl,digits = c(1,3,3,2,2),caption = "inercia"), 
       include.rownames = F)
 ```
 
