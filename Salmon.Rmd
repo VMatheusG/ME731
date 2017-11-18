@@ -42,8 +42,8 @@ names(dados) <- c("procedencia", "genero",
                   "guelras_doce", "guelras_mar")
 nomes_col <-  c("procedencia" = "procedência",
                 "genero" = "gênero",
-                "guelras_doce" = "guelras de agua doce",
-                "guelras_mar" = "guelras do mar")
+                "aguadoce" = "água doce",
+                "mar" = "mar")
 dados %<>% mutate(procedencia = 
                     ifelse(procedencia == 1, "Alaska", "Canadá"),
                   genero = 
