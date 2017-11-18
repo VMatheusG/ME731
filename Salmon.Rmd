@@ -1,0 +1,53 @@
+---
+title: "Salmon"
+author:
+      - "Matheus Gomes"
+      - "Daniela Moraes"
+      - "Marcos Ferreira"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+#Salmon
+
+
+##Pacotes
+```{r, message = F, warning = F}
+source("funcoes.R")
+source("Mresiduos.R",encoding = "UTF-8")
+pacotes <- c("ggplot2",
+             "magrittr",
+             "gridExtra",
+             "xtable",
+             "dplyr",
+             "purrr",
+             "tidyr",
+             "car",
+             "broom",
+             "grid",
+             "stringr")
+
+ipak(pacotes)
+options(xtable.comment = FALSE,OutDec = ",")
+```
+
+##lendo os dados
+
+```{r}
+dados <- read.table("Dados/Salmon.txt")
+names(dados) <- c("procedencia", "genero",
+                  "guelras_doce", "guelras_mar")
+nomes_col <-  c("procedencia" = "procedência",
+                "genero" = "gênero",
+                "guelras_doce" = "guelras de agua doce",
+                "guelras_mar" = "guelras do mar")
+dados %<>% mutate(procedencia = 
+                    ifelse(procedencia == 1, "Alaska", "Canadá"),
+                  genero = 
+                    ifelse(genero == 1,"fêmea","macho"))
+
+```
+
