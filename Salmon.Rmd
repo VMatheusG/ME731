@@ -34,20 +34,165 @@ ipak(pacotes)
 options(xtable.comment = FALSE,OutDec = ",")
 ```
 
-##lendo os dados
+##Lendo os dados
 
 ```{r}
 dados <- read.table("Dados/Salmon.txt")
-names(dados) <- c("procedencia", "genero",
-                  "guelras_doce", "guelras_mar")
+names(dados) <- c("Procedência", "Gênero",
+                  "Água doce", "Mar")
 nomes_col <-  c("procedencia" = "procedência",
                 "genero" = "gênero",
-                "aguadoce" = "água doce",
+                "doce" = "água doce",
                 "mar" = "mar")
-dados %<>% mutate(procedencia = 
-                    ifelse(procedencia == 1, "Alaska", "Canadá"),
-                  genero = 
-                    ifelse(genero == 1,"fêmea","macho"))
+dados %<>% mutate(Procedência = 
+                   factor(ifelse(Procedência == 1, "Alaska", "Canadá")),
+                  Gênero = 
+                     factor(ifelse(Gênero == 1,"Fêmea","Macho")))
+
+dados_tidy <- dados %>% gather(Estado,Valor,"Água doce",Mar) %>% 
+  mutate(Estado = factor(Estado))
+```
+
+
+#analize descritiva
+
+
+##Medidas Descritivas
+
+```{r results = "asis"}
+descritivas <- 
+dados_tidy %>% group_by(Estado,Procedência) %>% 
+  summarise_if(.predicate = function(x) is.numeric(x),
+                  .funs = c(Média = "mean",
+                     DP = "sd",
+                     Var. = "var",
+                     Mínimo = "min",
+                     CV =  "cv",
+                     Mediana = "median",
+                     Máximo = "max")) %>% 
+   mutate_if(.predicate = is.numeric,funs(round(.,3))) 
+
+names(descritivas )[names(descritivas ) == 'CV'] <- 'CV(%)'
+  
+descritivas$Estado[c(2,4)] <- NA
+names(descritivas)[1] <- ""
+print(xtable(descritivas),include.rownames = F,
+      hline.after = c(-1, 0, nrow(descritivas), 2))
+```
+
+##Covariancia  & Correlaçoes
+
+acima da diagonal temos a correlação 
+
+abaixo da dianogal a covariancia
+
+na diagonal a variancia
+
+```{r results = "asis"}
+#Alaska
+cov_cor_alaska <- 
+dados %>% filter(Procedência == "Alaska") %>% 
+  select_if(is.integer) %>% cov() 
+
+cov_cor_alaska[1,2] <- 
+   cor(dados[dados$Procedência == "Alaska",3:4])[1,2]
+cov_cor_alaska %<>% apply(2,round,digits =2)
+print(xtable(cov_cor_alaska ,caption = "Alaska"))
+#Canada
+cov_cor_canada <- 
+dados %>% filter(Procedência == "Canadá") %>% 
+  select_if(is.integer) %>% cov() 
+
+cov_cor_canada[1,2] <- 
+   cor(dados[dados$Procedência == "Canadá",3:4])[1,2]
+
+cov_cor_canada %<>% apply(2,round,digits =2)
+
+print(xtable(cov_cor_alaska ,caption = "Canadá"))
+```
+
+
+##Dispersao
+
+```{r}
+ggplot(dados,aes_string("`Água doce`","Mar",col = "Procedência")) +
+  geom_point() + theme_bw()  + 
+  scale_color_brewer(palette = "Dark2")
 
 ```
+##Boxplot e histrograma
+
+```{r}
+ggplot(dados_tidy,aes(x = Procedência,y = Valor)) +
+  geom_boxplot() +
+  facet_grid(Gênero~Estado) + theme_bw()
+
+ggplot(dados_tidy,aes(x = Valor,fill = Estado)) +
+  geom_density() +
+  theme_bw() +
+  facet_grid(.~Procedência)
+
+
+ggplot(dados_tidy,aes(x = Valor,col = Procedência)) +
+  geom_density() +
+  theme_bw() +
+  facet_grid(.~Estado)
+
+```
+
+##qqplot
+
+```{r}
+# par_base <- par()
+par(mfrow = c(2,2),
+          mar=c(2, 1.8, 0, 1) + 0.1,cex=.9, oma = c(2, 2, 2, 2) )
+#1 
+dados_tidy %>% filter(Procedência == "Alaska",
+                      Estado == "Água doce") %$% 
+  qqPlot(scale(Valor),xlab = "",ylab = "")
+#2
+dados_tidy %>% filter(Procedência == "Alaska",
+                      Estado == "Mar") %$% 
+  qqPlot(scale(Valor),xlab = "",ylab = "")
+#3
+dados_tidy %>% filter(Procedência == "Canadá",
+                      Estado == "Água doce") %$% 
+  qqPlot(scale(Valor),xlab = "",ylab = "")
+#4
+dados_tidy %>% filter(Procedência == "Canadá",
+                      Estado == "Mar") %$% 
+  qqPlot(scale(Valor),xlab = "",ylab = "")
+
+title(ylab = "quantil dos dados padrozinados",
+      xlab = "quantil N(0,1)",
+      outer = TRUE, line = 1)
+
+mtext("Água doce                                                    Mar", side=3, line=1,outer = T)
+mtext("         Canadá                      Alaska",
+      side = 4, line=0,outer = T)
+```
+
+
+
+##Mahalanobis
+
+```{r}
+##Alaska
+par(mfrow = c(1,2))
+nvar <- 2
+mx <- dados[dados$Procedência == "Alaska", 3:4]
+n <- nrow(mx)
+mu <- apply(mx, 2, mean)
+s2 <- cov(mx)
+vQ <- n*mahalanobis(mx,center = mu,cov = s2)
+qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "quantil da distribuição qui-quadrado", ylab = "quantil da forma quadratica", cex = 1.2, id.cex = 1.2, main = "Alaska")
+##Canada
+mx <- dados[dados$Procedência == "Canadá", 3:4]
+n <- nrow(mx)
+mu <- apply(mx, 2, mean)
+s2 <- cov(mx)
+vQ <- n*mahalanobis(mx,center = mu,cov = s2)
+qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "quantil da distribuição qui-quadrado", ylab = "quantil da forma quadratica", cex = 1.2, id.cex = 1.2, main = "Canadá")
+```
+
 
