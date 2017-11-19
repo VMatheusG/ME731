@@ -28,7 +28,9 @@ pacotes <- c("ggplot2",
              "car",
              "broom",
              "grid",
-             "stringr")
+             "stringr",
+             "caret",
+             "MASS")
 
 ipak(pacotes)
 options(xtable.comment = FALSE,OutDec = ",")
@@ -49,12 +51,12 @@ dados %<>% mutate(Procedência =
                   Gênero = 
                      factor(ifelse(Gênero == 1,"Fêmea","Macho")))
 
-dados_tidy <- dados %>% gather(Estado,Valor,"Água doce",Mar) %>% 
+dados_tidy <- dados %>% gather("Estado","Valor","Água doce",Mar) %>% 
   mutate(Estado = factor(Estado))
 ```
 
 
-#analize descritiva
+#Analize descritiva
 
 
 ##Medidas Descritivas
@@ -108,7 +110,7 @@ cov_cor_canada[1,2] <-
 
 cov_cor_canada %<>% apply(2,round,digits =2)
 
-print(xtable(cov_cor_alaska ,caption = "Canadá"))
+print(xtable(cov_cor_canada ,caption = "Canadá"))
 ```
 
 
@@ -120,17 +122,12 @@ ggplot(dados,aes_string("`Água doce`","Mar",col = "Procedência")) +
   scale_color_brewer(palette = "Dark2")
 
 ```
-##Boxplot e histrograma
+##Boxplot e densidades
 
 ```{r}
 ggplot(dados_tidy,aes(x = Procedência,y = Valor)) +
   geom_boxplot() +
   facet_grid(Gênero~Estado) + theme_bw()
-
-ggplot(dados_tidy,aes(x = Valor,fill = Estado)) +
-  geom_density() +
-  theme_bw() +
-  facet_grid(.~Procedência)
 
 
 ggplot(dados_tidy,aes(x = Valor,col = Procedência)) +
@@ -195,4 +192,118 @@ vQ <- n*mahalanobis(mx,center = mu,cov = s2)
 qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "quantil da distribuição qui-quadrado", ylab = "quantil da forma quadratica", cex = 1.2, id.cex = 1.2, main = "Canadá")
 ```
 
+
+
+#Analize Descriminante
+
+probabilidade a priori igual 
+
+50% para treino e 50% para teste
+
+##Criando partição
+```{r}
+set.seed(10)
+idx <- createDataPartition(dados$Procedência,p = .5,list = F)
+treino <- dados[idx,]
+teste <- dados[-idx,]
+```
+
+##TEA(taxa de erro aparente) & TOE(Taxa Otima de erro)
+
+```{r results = "asis"}
+result.ad <- lda(Procedência~. - Gênero, dados, prior = c(1,1)/2,subset = idx)
+##predict
+
+pred <- predict(result.ad, dados[-idx, ])$class
+# confusionMatrix(pred,dados$Procedência[-idx])
+tc <- ftable(Referência = dados$Procedência[-idx],
+Predito =pred)
+
+print(xtableFtable(tc))
+tc <- table(Referência = dados$Procedência[-idx],
+Predito =pred)
+# função discriminante
+teste$y <- predict(result.ad, dados[-idx, ])$x %>% as.numeric()
+
+# TEA - taxa de erro aparente
+TEA <- (tc[1,2]+tc[2,1])/sum(tc)
+cat("TEA = ",100*TEA)
+# TOE  =  Taxa Otima de erro
+v.mean1 <- cbind(c(result.ad$means[1,]))
+v.mean2 <- cbind(c(result.ad$means[2,]))
+
+S21 <-  treino %>% filter(Procedência == "Alaska") %>% 
+  select_if(is.integer) %>% cov() 
+S22 <-  treino %>% filter(Procedência == "Canadá") %>% 
+  select_if(is.integer) %>% cov() 
+rowdados <- treino %>% 
+  filter(Procedência == "Canadá") %>% 
+  nrow()
+Sp <- ((rowdados - 1) * S21 +
+      (rowdados - 1) * S22 )/
+      (rowdados + rowdados - 2)
+q.classifi <- 0.5*t(v.mean1-v.mean2)%*%solve(Sp)%*%(v.mean1+v.mean2)
+delta2 <-  t(v.mean1-v.mean2)%*%solve(Sp)%*%(v.mean1 - v.mean2)
+
+TOE <- pnorm(-sqrt(delta2)/2)
+cat("\n\nTOE = ",100*TOE,"\n\n")
+```
+
+##Medidas resumo
+
+```{r results = "asis"}
+descritivas <- 
+teste %>%
+  dplyr::select(Procedência,y) %>% 
+  group_by(Procedência) %>% 
+  summarise_if(.predicate = function(x) is.numeric(x),
+                  .funs = c(Média = "mean",
+                     DP = "sd",
+                     Var. = "var",
+                     Mínimo = "min",
+                     CV =  "cv",
+                     Mediana = "median",
+                     Máximo = "max")) %>% 
+   mutate_if(.predicate = is.numeric,funs(round(.,3)))
+
+descritivas$n <- 25L
+  
+    
+
+names(descritivas)[names(descritivas ) == 'CV'] <- 'CV(%)'
+  
+print(xtable(descritivas),include.rownames = F,
+      hline.after = c(-1, 0, nrow(descritivas), 2))
+```
+
+
+##Boxplot
+
+```{r}
+ggplot(teste,aes(x= Procedência,y = y)) + geom_boxplot() + labs(y = "valor da função discriminante") + theme_bw()
+```
+
+
+
+##Densidade
+
+```{r}
+ggplot(teste,aes(col= Procedência,x = y,)) + geom_density() + labs(y = "densidade",x = "valor da função discriminante" ) + theme_bw() +
+  scale_color_brewer(palette = "Dark2")
+```
+
+
+
+#Analize Descriminante com genero
+
+```{r}
+teste_f <- teste %>% filter(Gênero == "Fêmea")
+teste_m <- teste %>% filter(Gênero == "Macho")
+
+tc <-  ftable(dados$Gênero[-idx],
+        Referência = dados$Procedência[-idx],
+        Predito = pred) 
+ print(xtableFtable(tc))
+ tc %<>% tidy() %>% spread(Predito,Freq)
+```
 
