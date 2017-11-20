@@ -127,7 +127,7 @@ ggplot(dados,aes_string("`Água doce`","Mar",col = "Procedência")) +
 ```{r}
 ggplot(dados_tidy,aes(x = Procedência,y = Valor)) +
   geom_boxplot() +
-  facet_grid(Gênero~Estado) + theme_bw()
+  facet_grid(.~Estado) + theme_bw()
 
 
 ggplot(dados_tidy,aes(x = Valor,col = Procedência)) +
@@ -293,17 +293,99 @@ ggplot(teste,aes(col= Procedência,x = y,)) + geom_density() + labs(y = "densida
 ```
 
 
+##Considerando a variavel genero
+
+
+```{r}
+ggplot(dados_tidy,aes(x = Procedência,y = Valor)) +
+  geom_boxplot() +
+  facet_grid(Gênero~Estado) + theme_bw()
+```
 
 #Analize Descriminante com genero
 
-```{r}
+```{r results="asis"}
 teste_f <- teste %>% filter(Gênero == "Fêmea")
 teste_m <- teste %>% filter(Gênero == "Macho")
 
 tc <-  ftable(dados$Gênero[-idx],
         Referência = dados$Procedência[-idx],
         Predito = pred) 
- print(xtableFtable(tc))
- tc %<>% tidy() %>% spread(Predito,Freq)
+ print(xtableFtable(tc), hline.after = c(-1, 0, 4, 2,6))
+tc %<>% tidy() %>% spread(Predito,Freq)
+```
+
+##TEA & TOE Femea
+
+```{r}
+
+# TEA - taxa de erro aparente
+TEA <- (tc[1,4]+tc[2,3])/sum(tc[1:2,3:4])
+cat("TEA = ",100*TEA)
+# TOE  =  Taxa Otima de erro
+v.mean1 <- treino %>% filter(Procedência == "Alaska",
+                          Gênero == "Fêmea") %>%
+                      select_if(is.integer) %>% 
+                    apply(2,mean) 
+v.mean2 <- treino %>% filter(Procedência == "Canadá",
+                          Gênero == "Fêmea") %>%
+                      select_if(is.integer) %>%
+                      apply(2,mean)
+
+S21 <-  treino %>% filter(Procedência == "Alaska",
+                          Gênero == "Fêmea") %>% 
+  select_if(is.integer) %>% cov() 
+S22 <-  treino %>% filter(Procedência == "Canadá",
+                          Gênero == "Fêmea") %>% 
+  select_if(is.integer) %>% cov() 
+
+rowdados <- treino %>% 
+  filter(Procedência == "Canadá",Gênero == "Fêmea") %>% 
+  nrow()
+Sp <- ((rowdados - 1) * S21 +
+      (rowdados - 1) * S22 )/
+      (rowdados + rowdados - 2)
+q.classifi <- 0.5*t(v.mean1-v.mean2)%*%solve(Sp)%*%(v.mean1+v.mean2)
+delta2 <-  t(v.mean1-v.mean2)%*%solve(Sp)%*%(v.mean1 - v.mean2)
+
+TOE <- pnorm(-sqrt(delta2)/2)
+cat("\n\nTOE = ",100*TOE,"\n\n")
+```
+
+##TEA & TOE Macho
+
+```{r}
+
+# TEA - taxa de erro aparente
+TEA <- (tc[3,4]+tc[4,3])/sum(tc[3:4,3:4])
+cat("TEA = ",100*TEA)
+# TOE  =  Taxa Otima de erro
+v.mean1 <- treino %>% filter(Procedência == "Alaska",
+                          Gênero == "Macho") %>%
+                      select_if(is.integer) %>% 
+                    apply(2,mean) 
+v.mean2 <- treino %>% filter(Procedência == "Canadá",
+                          Gênero == "Macho") %>%
+                      select_if(is.integer) %>%
+                      apply(2,mean)
+
+S21 <-  treino %>% filter(Procedência == "Alaska",
+                          Gênero == "Macho") %>% 
+  select_if(is.integer) %>% cov() 
+S22 <-  treino %>% filter(Procedência == "Canadá",
+                          Gênero == "Macho") %>% 
+  select_if(is.integer) %>% cov() 
+
+rowdados <- treino %>% 
+  filter(Procedência == "Canadá", Gênero == "Macho") %>% 
+  nrow()
+Sp <- ((rowdados - 1) * S21 +
+      (rowdados - 1) * S22 )/
+      (rowdados + rowdados - 2)
+q.classifi <- 0.5*t(v.mean1-v.mean2)%*%solve(Sp)%*%(v.mean1+v.mean2)
+delta2 <-  t(v.mean1-v.mean2)%*%solve(Sp)%*%(v.mean1 - v.mean2)
+
+TOE <- pnorm(-sqrt(delta2)/2)
+cat("\n\nTOE = ",100*TOE,"\n\n")
 ```
 
