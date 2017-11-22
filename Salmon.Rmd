@@ -304,6 +304,45 @@ ggplot(dados_tidy,aes(x = Procedência,y = Valor)) +
 
 #Analize Descriminante com genero
 
+##Medidas Descritivas
+
+```{r results = "asis"}
+descritivas <- 
+dados_tidy %>% group_by(Gênero,Procedência,Estado) %>% 
+  summarise_if(.predicate = function(x) is.numeric(x),
+                  .funs = c(Média = "mean",
+                     DP = "sd",
+                     Var. = "var",
+                     Mínimo = "min",
+                     CV =  "cv",
+                     Mediana = "median",
+                     Máximo = "max")) %>% 
+   mutate_if(.predicate = is.numeric,funs(round(.,3))) 
+
+names(descritivas )[names(descritivas ) == 'CV'] <- 'CV(%)'
+ descritivas[c(2:4,6:8),1] <- NA
+ names(descritivas)[1] <- ""
+print(xtable(descritivas),include.rownames = F,
+      hline.after = c(-1, 0, nrow(descritivas), 4))
+tabelaf <- dados_tidy %$% ftable(Gênero,Procedência," "=Estado)
+xtableFtable(tabelaf)
+
+```
+
+
+##Densidade
+
+
+```{r}
+ggplot(dados_tidy,aes(x = Valor,col = Procedência)) +
+  geom_density() +
+  theme_bw() +
+  facet_grid(Gênero~Estado) +
+  labs(y = NULL)
+
+```
+
+
 ```{r results="asis"}
 teste_f <- teste %>% filter(Gênero == "Fêmea")
 teste_m <- teste %>% filter(Gênero == "Macho")
