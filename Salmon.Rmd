@@ -196,7 +196,7 @@ qqPlot(vQ, dist = "chisq", df = nvar, col.lines = 1, grid = "FALSE", xlab = "qua
 
 #Analize Descriminante
 
-probabilidade a priori igual 
+probabilidade a priori 75% alaska e 25% canada
 
 50% para treino e 50% para teste
 
@@ -211,7 +211,7 @@ teste <- dados[-idx,]
 ##TEA(taxa de erro aparente) & TOE(Taxa Otima de erro)
 
 ```{r results = "asis"}
-result.ad <- lda(Procedência~. - Gênero, dados, prior = c(1,1)/2,subset = idx)
+result.ad <- lda(Procedência~. - Gênero, dados, prior = c(.75,.25),subset = idx)
 ##predict
 
 pred <- predict(result.ad, dados[-idx, ])$class
@@ -324,7 +324,7 @@ names(descritivas )[names(descritivas ) == 'CV'] <- 'CV(%)'
  names(descritivas)[1] <- ""
 print(xtable(descritivas),include.rownames = F,
       hline.after = c(-1, 0, nrow(descritivas), 4))
-tabelaf <- dados_tidy %$% ftable(Gênero,Procedência," "=Estado)
+tabelaf <- dados_tidy %$% ftable(Gênero,Procedência)
 xtableFtable(tabelaf)
 
 ```
