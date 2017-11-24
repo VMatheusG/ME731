@@ -324,7 +324,7 @@ names(descritivas )[names(descritivas ) == 'CV'] <- 'CV(%)'
  names(descritivas)[1] <- ""
 print(xtable(descritivas),include.rownames = F,
       hline.after = c(-1, 0, nrow(descritivas), 4))
-tabelaf <- dados_tidy %$% ftable(Gênero,Procedência)
+tabelaf <- dados %$% ftable(Gênero,Procedência)
 xtableFtable(tabelaf)
 
 ```
